@@ -1,0 +1,24 @@
+### Como instalar Mutt:
+
+Leyendo la doy y el manual en el sitio: http://www.mutt.org/
+
+Version Quick & Dirty:
+
+yum -y remove mutt
+yum -y install gcc ncurses-devel openssl-devel cyrus-sasl-devel perl cyrus-sasl-plain
+cd /usr/src
+wget ftp://ftp.mutt.org/pub/mutt/mutt-1.11.2.tar.gz         
+tar zxvf mutt-1.11.2.tar.gz
+rm -f mutt-1.11.2.tar.gz
+cd mutt-1.11.2
+./configure --prefix=/usr --sysconfdir=/etc \
+    --enable-smtp \
+    --with-ssl \
+    --with-sasl \
+    --with-gss \
+    --with-gnutls \
+    --with-docdir=/usr/share/doc/mutt-${MUTT_VERSION} \
+    --enable-debug
+make 
+make install
+cd
