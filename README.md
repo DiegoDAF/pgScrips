@@ -6,6 +6,7 @@ Bashes to check postgres
 ```sh
 echo test  $(date +"%Y-%m-%d %H:%M:%S") - $(hostname -f) - $(hostname -I) | mutt -s "test $(date +"%Y-%m-%d %H:%M:%S") - $(hostname -f) - $(hostname -I)" -- diegodaf@gmail.com
 ```
+Check howToInstallMutt.txt
 
 ### Lista de scripts
 
