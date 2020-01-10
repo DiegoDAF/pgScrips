@@ -1,0 +1,200 @@
+--------------------------------------------------
+-- 20200108 DAF .psqlrc  Version inicial
+--------------------------------------------------
+
+
+
+-- Para que no muestre el output de los siquientes comandos
+\set QUIET ON
+
+
+-- Prompts
+-- Prompt1 / Prompt2 / Prompt3
+-- %M : server
+-- %m : host name
+-- %> : port
+-- %n : user
+-- %/ : current database
+-- %~ : like %/ but ~ for default database
+-- %# : '#' if superuser, '>' otherwise
+-- %R
+-- %x
+-- %[...%] : terminal control characters
+-- Examples
+
+\set PROMPT1 'u: %n db: %/ %# '
+\set PROMPT2 '%# '
+\set PROMPT3 ''
+
+
+\timing on
+
+-- Pone en mayusculas las palabras autocompletadas
+\set COMP_KEYWORD_CASE upper
+
+--tipo de lineas, unicode, ascii etc
+--\pset linestype ascii
+
+-- Borde de la tabla de resultados
+\pset border 0
+
+-- unicode_border_linestyle: border drawing style for unicode style.
+-- Values: single, double.
+\pset unicode_border_linestyle single
+
+-- unicode_column_linestyle: column drawing style for unicode style.
+-- Values: single, double.
+\pset unicode_column_linestyle single
+
+-- unicode_header_linestyle: header drawing style for unicode style.
+-- Values: single, double.
+\pset unicode_header_linestyle single
+
+
+-- columns: target width for wrapped format
+-- Values: number
+\pset columns 0
+
+-- expanded: extended display
+-- Values: auto, on, off
+\x off
+
+
+-- fieldsep_zero: set field separator to a zero byte.
+--Values: no value.
+--\pset fieldsep_zero 
+
+
+-- fieldsep_zero: set field separator to a zero byte.
+--Values: no value.
+--\pset fieldsep_zero
+
+-- recordsep_zero: set the line separator in unaligned output format to
+-- zero byte.
+-- Values: no values.
+--\pset recordsep_zero
+
+-- tableattr: attributes in the table tag for HTML format.
+-- Values: string. Without value, will unset attributes.
+--\pset tableattr TODO
+
+-- title: table title for printed tables.
+-- Values: string. Without value, title is unset.
+
+-- tuples_only: can also be abreviated with \t
+-- Values: on, off. Without value, will toggle.
+\pset tuples_only off
+
+
+-- Para que no pagine
+\pset pager off
+
+-- Como va a imprimir los NULOS
+\pset null '[null]'
+
+-- Nombre del archivo history
+\set HISTFILE ~/scripts/psqlhists/psql_history- :HOST - :PORT - :DBNAME - :USER
+
+-- Cantidad de comandos en el history
+\set HISTSIZE 5000
+
+-- Sin duplicados
+\set HISTCONTROL ignoredups
+
+-- Nivel de debug
+\set VERBOSITY verbose
+\errverbose
+
+-- como el @echo off para imprimir algun mensaje
+\set ECHO_HIDDEN ON
+
+\set QUIET OFF
+
+\echo '\nCurrent Host Server Date Time : '`date` '\n'
+
+\echo 'Administrative queries:\n'
+\echo '\t\t\t:settings\t-- Server Settings'
+\echo '\t\t\t:conninfo\t-- Server connections'
+\echo '\t\t\t:activity\t-- Server activity'
+\echo '\t\t\t:locks\t\t-- Lock info'
+\echo '\t\t\t:waits\t\t-- Waiting queires'
+\echo '\t\t\t:dbsize\t\t-- Database Size'
+\echo '\t\t\t:tablesize\t-- Tables Size'
+\echo '\t\t\t:uselesscol\t-- Useless columns'
+\echo '\t\t\t:uptime\t\t-- Server uptime'
+\echo '\t\t\t:backends\t\t-- Show number of connected backends'
+\echo '\t\t\t:buffer_cache_hit_ratio'
+\echo '\t\t\t:kill_old_transactions'
+\echo '\t\t\t:queries'
+\echo '\t\t\t:uptime'
+
+\echo '\t\t\t:menu\t\t-- Help Menu'
+\echo '\t\t\t\\h\t\t-- Help with SQL commands'
+\echo '\t\t\t\\?\t\t-- Help with psql commands\n'
+
+\echo 'Development queries:\n'
+\echo '\t\t\t:sp\t\t-- Current Search Path'
+\echo '\t\t\t:clear\t\t-- Clear screen'
+\echo '\t\t\t:ll\t\t-- List\n'
+
+-- Administration queries
+
+\set menu '\\i ~/.psqlrc'
+
+-- number of connected backends
+\set settings 'select name, setting,unit,context from pg_settings;'
+
+-- buffer cache hit ratio
+\set buffer_cache_hit_ratio 'select datname, blks_hit::float/(blks_hit+blks_read) as hit_ratio from pg_stat_database where blks_read+blks_hit <> 0;'
+
+-- kill transactions that have been "idle in transaction" for more than 10 minutes
+\set kill_old_transactions 'select count(pg_terminate_backend(pid)) as nb_killed_proc from pg_stat_activity where query = \'<IDLE> in transaction\' and current_timestamp - query_start > \'10 min\';'
+
+-- running queries
+\set queries  'select current_timestamp - query_start as runtime,pid,datname,usename,query from pg_stat_activity where query != \'<IDLE>\' order by 1 desc; '
+
+-- server uptime
+\set uptime   'select date_trunc(\'second\',current_timestamp - pg_postmaster_start_time()) as uptime;'
+
+
+
+
+-- number of connected backends
+\set backends 'SELECT datname, numbackends FROM pg_catalog.pg_stat_database;'
+
+\set locks  'SELECT bl.pid AS blocked_pid, a.usename AS blocked_user, kl.pid AS blocking_pid, ka.usename AS blocking_user, a.query AS blocked_statement FROM pg_catalog.pg_locks bl JOIN pg_catalog.pg_stat_activity a ON bl.pid = a.pid JOIN pg_catalog.pg_locks kl JOIN pg_catalog.pg_stat_activity ka ON kl.pid = ka.pid ON bl.transactionid = kl.transactionid AND bl.pid != kl.pid WHERE NOT bl.granted;'
+
+\set conninfo 'select usename, count(*) from pg_stat_activity group by usename;'
+
+\set activity 'select datname, pid, usename, application_name,client_addr, client_hostname, client_port, query, state from pg_stat_activity;'
+
+\set waits 'SELECT pg_stat_activity.pid, pg_stat_activity.query, pg_stat_activity.waiting, now() - pg_stat_activity.query_start AS \"totaltime\", pg_stat_activity.backend_start FROM pg_stat_activity WHERE pg_stat_activity.query !~ \'%IDLE%\'::text AND pg_stat_activity.waiting = true;'
+
+\set dbsize 'SELECT datname, pg_size_pretty(pg_database_size(datname)) db_size FROM pg_database ORDER BY db_size;'
+
+\set tablesize 'SELECT nspname || \'.\' || relname AS \"relation\", pg_size_pretty(pg_relation_size(C.oid)) AS "size" FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) WHERE nspname NOT IN (\'pg_catalog\', \'information_schema\') ORDER BY pg_relation_size(C.oid) DESC LIMIT 40;'
+
+\set uselesscol 'SELECT nspname, relname, attname, typname, (stanullfrac*100)::int AS null_percent, case when stadistinct >= 0 then stadistinct else abs(stadistinct)*reltuples end AS \"distinct\", case 1 when stakind1 then stavalues1 when stakind2 then stavalues2 end AS \"values\" FROM pg_class c JOIN pg_namespace ns ON (ns.oid=relnamespace) JOIN pg_attribute ON (c.oid=attrelid) JOIN pg_type t ON (t.oid=atttypid) JOIN pg_statistic ON (c.oid=starelid AND staattnum=attnum) WHERE nspname NOT LIKE E\'pg\\\\_%\' AND nspname != \'information_schema\' AND relkind=\'r\' AND NOT attisdropped AND attstattarget != 0 AND reltuples >= 100 AND stadistinct BETWEEN 0 AND 1 ORDER BY nspname, relname, attname;'
+
+\set uptime 'select now() - pg_postmaster_start_time() AS uptime;'
+
+-- Development queries:
+
+\set sp 'SHOW search_path;'
+\set clear '\\! clear;'
+\set ll '\\! ls -lrt;'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
